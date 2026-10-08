@@ -16,12 +16,8 @@
 
 #include <queue>
 #include "scheduler.hpp"
-#include <unordered_map>
 
 static std::queue<ProcessId_t> readyQ;
-static std::unordered_map<ProcessId_t, Time_t> arrivalTime;
-static double totalTurnaround = 0;
-static unsigned completedProcesses = 0;
 
 static const CPUId_t NUM_CORES = 8;
 static const CPUId_t FIRST_SMALL_CORE = 4;
@@ -140,7 +136,6 @@ void CreateProcess(ProcessId_t pid) {
     // A new process has been created. Update the scheduler's data structures and decisions accordingly.
     SimOutput("CreateProcess(" + std::to_string(pid) + ")", 4);
     InitCores_();
-    arrivalTime[pid] = Now();
     readyQ.push(pid);
     Dispatch();
 }
@@ -158,9 +153,6 @@ void ExitProcess(ProcessId_t pid) {
     }
     cores[c].state = IDLE;
     cores[c].pid = InvalidProcessId();
-    totalTurnaround += Now() - arrivalTime[pid];
-    arrivalTime.erase(pid);
-    completedProcesses++;
     Dispatch();
 }
 
@@ -192,7 +184,5 @@ void CStateTransitionComplete(CPUId_t core_id){
 
 void SimulationComplete(Time_t now) {
     // Add any bookkeeping or statistics that you would want to collect. Program terminates after this function returns.
-    std::cout << "Run stopped at " << FormatTime(now) << " after consuming " << GetTotalEnergyConsumed()/3600000000.0 << " kWh" << std::endl;
-    std::cout << "Processes completed: " << completedProcesses
-              << ", average turnaround: " << (completedProcesses ? totalTurnaround / completedProcesses / 1000000.0 : 0) << " s" << std::endl;
+    std::cout << "Run stopped at " << FormatTime(now) << " after consuming " << GetTotalEnergyConsumed() / 3600000000.0 << " kWh" << std::endl;
 }
